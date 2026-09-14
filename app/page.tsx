@@ -1,8 +1,11 @@
 "use client";
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { FudaState, Profile } from "./types";
-import {Fuda} from "./components/Fuda"
+import { Fuda } from "./components/Fuda"
 import { FRIENDS } from "./data";
+import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
+import { db } from "./firebase";
+
 
 function todayString(): string {
   const d = new Date();          // 今の日時
@@ -21,14 +24,31 @@ export default function Home() {
   const [selected, setSelected] = useState<Profile | null>(null);
   const ORDER: FudaState[] = ["prep", "work", "lunch", "closed"];
 
+  const [remoteFudas, setRemoteFudas] = useState<any[]>([]);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "presences"), (snapshot) => {
+      const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    console.log("受け取ったデータ:", data);   // ← これを足す
+    setRemoteFudas(data);
+    });
+    return () => unsub();   // 後片付け（後述）
+  }, []);
 
   return (
     <div>
-      <button onClick={() => {// ボタンクリックでふだの状態が変化
+      <button onClick={async () => {// ボタンクリックでふだの状態が変化
         const i = ORDER.indexOf(label);
         const next = ORDER[(i + 1) % ORDER.length];  // 次へ。最後なら0に戻る
         setLabel(next);
         setLabelDate(todayString());
+
+        const ref = doc(db, "presences", "me");  // 自分のカード
+        await setDoc(ref, {                       // 書き込み
+          state: next,
+          stateDate: todayString(),
+          note: null,
+        });
       }
       }> <Fuda state={labelDate === todayString() ? label : "prep"} /></button>
 
@@ -44,6 +64,13 @@ export default function Home() {
           <div key={friend.name} onClick={() => setSelected(friend)}>
             <h3>{friend.name}</h3>
             <Fuda state={friend.state} />
+          </div>
+        ))}
+
+        {remoteFudas.map((f) => (
+          <div key={f.id}>
+            <h3>{f.id}</h3>
+            <Fuda state={f.state} />
           </div>
         ))}
       </div>
