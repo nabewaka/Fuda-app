@@ -21,3 +21,7 @@ export const FRIENDS: { name: string; state: FudaState; lab: string; schedule: S
     ],
   },
 ]
+export const MEMBERS: Record<string, { name: string; lab: string }> = {
+  "0325": { name: "たかし", lab: "有機化学" },
+  "1111": { name: "みお",   lab: "情報工学" },
+}
