@@ -14,7 +14,7 @@ export interface Presence {
 }
 
 export interface ScheduleItem {
-  day: "月" | "火" | "水" | "木" | "金";
+  day:  string; //"月" | "火" | "水" | "木" | "金";
   slot: string;   // "3限" でも "10:30" でもOK
   title: string;
   kind: ScheduleKind;
