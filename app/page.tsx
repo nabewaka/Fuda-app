@@ -49,6 +49,8 @@ function Sheet({ onClose, children }: { onClose: () => void; children: React.Rea
 }
 
 
+
+
 export default function Home() {
   const [label, setLabel] = useState<FudaState>("prep");// フダの状態
   const [labelDate, setLabelDate] = useState<string>(todayString());// 状態を変化させた日にち
@@ -94,6 +96,28 @@ export default function Home() {
     });
     return () => unsub();
   }, [uid]);
+
+    // 自分の札・メモを読み込み
+  useEffect(() => {
+    if (!myId) return;
+    const ref = doc(db, "presences", myId);
+    const unsub = onSnapshot(ref, (snap) => {   // getDoc → onSnapshot
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.state) {
+          setLabel(data.state);
+          setLabelDate(data.stateDate || todayString());
+        }
+        if (data.note) {
+          setPostedNote(data.note.text);
+          setNoteDate(data.note.date || todayString());
+        } else {
+          setPostedNote("");   // メモが消されたら画面からも消す
+        }
+      }
+    });
+    return () => unsub();
+  }, [myId]);
 
   // 自分の予定を読み込み
   useEffect(() => {
