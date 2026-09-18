@@ -1,6 +1,5 @@
 export type FudaState = "prep" | "work" | "lunch" | "closed";
 
-export type ScheduleKind = "seminar" | "ta" | "other";
 
 export interface Note {
   text: string;
@@ -17,7 +16,6 @@ export interface ScheduleItem {
   day:  string; //"月" | "火" | "水" | "木" | "金";
   slot: string;   // "3限" でも "10:30" でもOK
   title: string;
-  kind: ScheduleKind;
 }
 
 export interface Profile {

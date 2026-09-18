@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import { FudaState, Profile, ScheduleItem } from "./types";
 import { Fuda, Sticky } from "./components/Fuda"
-import { FRIENDS, MEMBERS } from "./data";
+import {  MEMBERS } from "./data";
 import { collection, onSnapshot, doc, setDoc, getDoc } from "firebase/firestore";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "./firebase";
@@ -17,12 +17,12 @@ function todayString(): string {
 }
 
 // 薄緑テーマの色（1か所で管理）
-const BG = "radial-gradient(120% 80% at 50% -10%, #eef4e6 0%, #dbe8cf 55%, #c7dbb9 100%)";
+const BG = "#dbe8cf"//"radial-gradient(120% 80% at 50% -10%, #eef4e6 0%, #dbe8cf 55%, #c7dbb9 100%)";
 const INK = "#2f3d2b";       // 濃い文字
 const INK_SUB = "#6a7862";   // 薄い文字
 const CARD = "#f4f7ee";      // カード/入力欄の白っぽい背景
 const LINE = "#c2d2b2";      // 枠線
-const ACCENT = "#5c8a4a";    // 緑のアクセント（ボタン）
+const ACCENT = "#5c8a4a";    // ボタン
 
 // 下から出るポップアップの共通枠
 function Sheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
@@ -87,11 +87,12 @@ export default function Home() {
 
   // 購読
   useEffect(() => {
+    if (!uid) return;  
     const unsub = onSnapshot(collection(db, "presences"), (snapshot) => {
       setRemoteFudas(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
     return () => unsub();
-  }, []);
+  }, [uid]);
 
   // 自分の予定を読み込み
   useEffect(() => {
@@ -282,7 +283,7 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
           <button
             onClick={() => {
               if (!day || !slot || !title) return;
-              const item: ScheduleItem = { day, slot, title, kind: "other" };
+              const item: ScheduleItem = { day, slot, title};
               setMySchedule([...mySchedule, item]);
               setDay(""); setSlot(""); setTitle("");
             }}
