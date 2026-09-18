@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "フダ",
-  description: "みんなが営業中かそうでないかをチラ見できます",
+  description: "みんなが研究中かそうでないかをチラ見できます",
 };
 
 export default function RootLayout({

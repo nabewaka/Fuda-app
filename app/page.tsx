@@ -61,6 +61,7 @@ export default function Home() {
   const [selected, setSelected] = useState<Profile | null>(null);// 誰かを選んでいるか
 
   const [uid, setUid] = useState<string | null>(null);// ログインした人のid
+  const [myId, setMyId] = useState<string | null>(null);
   const [myName, setMyName] = useState<string | null>(null);// ログインした人の名前 
   const [myLab, setMyLab] = useState<string | null>(null);// ログインした人の名前 
 
@@ -96,16 +97,16 @@ export default function Home() {
 
   // 自分の予定を読み込み
   useEffect(() => {
-    if (!uid) return;              // uidがまだ無いなら何もしない
+    if (!myId) return;              // uidがまだ無いなら何もしない
     const load = async () => {
-      const ref = doc(db, "profiles", uid);
+      const ref = doc(db, "profiles", myId);
       const snap = await getDoc(ref);
       if (snap.exists()) {
         setMySchedule(snap.data().schedule || []);   // 読んで mySchedule に入れる
       }
     };
     load();
-  }, [uid]);
+  }, [myId]);
 
   const inputStyle = {
     background: CARD, border: `1px solid ${LINE}`, borderRadius: 10,
@@ -136,7 +137,7 @@ export default function Home() {
         <button
           onClick={() => {
             const member = MEMBERS[input];
-            if (member) { setMyName(member.name); setMyLab(member.lab); }
+            if (member) { setMyName(member.name); setMyLab(member.lab); setMyId(input); }
             else alert("該当者がいません");
           }}
           style={{ marginTop: 14, background: ACCENT, color: "#fff", border: "none", borderRadius: 10, padding: "10px 28px", fontSize: 15, cursor: "pointer" }}
@@ -178,8 +179,8 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
               const next = ORDER[(i + 1) % ORDER.length];
               setLabel(next);
               setLabelDate(todayString());
-              if (!uid) return;
-              const ref = doc(db, "presences", uid);
+              if (!myId) return;
+              const ref = doc(db, "presences", myId);
               await setDoc(ref, {
                 name: myName, lab: myLab, state: next, stateDate: todayString(),
                 note: postedNote ? { text: postedNote, date: noteDate } : null,
@@ -206,8 +207,8 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
             <button
               style={{ background: ACCENT, color: "#fff", border: "none", borderRadius: 10, padding: "10px 18px", fontSize: 14, cursor: "pointer", whiteSpace: "nowrap" }}
               onClick={async () => {
-                if (!uid) return;
-                const ref = doc(db, "presences", uid);
+                if (!myId) return;
+                const ref = doc(db, "presences", myId);
                 await setDoc(ref, { note: note ? { text: note, date: todayString() } : null }, { merge: true });
                 setPostedNote(note);
                 setNoteDate(todayString());
@@ -229,7 +230,7 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
         {/* ── 友達エリア（2列グリッド） ── */}
         <div style={{ color: INK_SUB, fontSize: 13, marginBottom: 16, paddingLeft: 2 }}>友達</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", rowGap: 24, columnGap: 12, justifyItems: "center" }}>
-          {remoteFudas.filter((f) => f.id !== uid && f.name).map((f) => (
+          {remoteFudas.filter((f) => f.id !== myId && f.name).map((f) => (
             <button
               key={f.id}
               onClick={async () => {
@@ -294,8 +295,8 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
  
           <button
             onClick={async () => {
-              if (!uid) return;
-              const ref = doc(db, "profiles", uid);
+              if (!myId) return;
+              const ref = doc(db, "profiles", myId);
               await setDoc(ref, { schedule: mySchedule }, { merge: true });
               alert("予定を保存しました");
             }}
