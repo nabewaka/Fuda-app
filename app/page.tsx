@@ -101,7 +101,7 @@ export default function Home() {
   useEffect(() => {
     if (!myId) return;
     const ref = doc(db, "presences", myId);
-    const unsub = onSnapshot(ref, (snap) => {   // getDoc → onSnapshot
+    const unsub = onSnapshot(ref, (snap) => { 
       if (snap.exists()) {
         const data = snap.data();
         if (data.state) {
@@ -121,7 +121,7 @@ export default function Home() {
 
   // 自分の予定を読み込み
   useEffect(() => {
-    if (!myId) return;              // uidがまだ無いなら何もしない
+    if (!myId) return;         
     const load = async () => {
       const ref = doc(db, "profiles", myId);
       const snap = await getDoc(ref);
@@ -151,7 +151,7 @@ export default function Home() {
         <div style={{ fontFamily: "'Hiragino Mincho ProN','Yu Mincho',serif", fontSize: 28, color: INK, letterSpacing: 4, marginBottom: 8 }}>
           研究室のフダ
         </div>
-        <div style={{ color: INK_SUB, fontSize: 13, marginBottom: 28 }}>誕生日4桁でログイン</div>
+        <div style={{ color: INK_SUB, fontSize: 13, marginBottom: 28 }}>4桁の数字でログイン</div>
         <input
           style={{ ...inputStyle, fontSize: 16, textAlign: "center", letterSpacing: 4, width: 160 }}
           placeholder="0000"
@@ -224,7 +224,7 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
           <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 16, width: "100%", maxWidth: 340 }}>
             <input
               style={{ ...inputStyle, flex: 1 }}
-              placeholder="例）昼ごはん行く人募集中！"
+              placeholder="例）こんにちは"
               value={note}
               onChange={(e) => { setNote(e.target.value); setNoteDate(todayString()); }}
             />
