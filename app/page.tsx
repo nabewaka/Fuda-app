@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import { FudaState, Profile, ScheduleItem } from "./types";
 import { Fuda, Sticky } from "./components/Fuda"
-import {  MEMBERS } from "./data";
+import { MEMBERS } from "./data";
 import { collection, onSnapshot, doc, setDoc, getDoc } from "firebase/firestore";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "./firebase";
@@ -90,29 +90,35 @@ export default function Home() {
 
   // 購読
   useEffect(() => {
-    if (!uid) return;  
+    if (!uid) return;
     const unsub = onSnapshot(collection(db, "presences"), (snapshot) => {
       setRemoteFudas(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
     return () => unsub();
   }, [uid]);
 
-    // 自分の札・メモを読み込み
+  // 自分の札・メモを読み込み
   useEffect(() => {
     if (!myId) return;
     const ref = doc(db, "presences", myId);
-    const unsub = onSnapshot(ref, (snap) => { 
+    const unsub = onSnapshot(ref, (snap) => {
       if (snap.exists()) {
         const data = snap.data();
         if (data.state) {
-          setLabel(data.state);
-          setLabelDate(data.stateDate || todayString());
+          if (data.stateDate === todayString()) {
+            setLabel(data.state);         // 今日設定したものなら、そのまま復元
+            setLabelDate(data.stateDate);
+          } else {
+            setLabel("prep");             // 前日以前なら、今日はprepから始める
+            setLabelDate(todayString());
+          }
         }
-        if (data.note) {
+        if (data.note && data.note.date === todayString()) {
           setPostedNote(data.note.text);
-          setNoteDate(data.note.date || todayString());
+          setNoteDate(data.note.date);
         } else {
-          setPostedNote("");   // メモが消されたら画面からも消す
+          setPostedNote("");
+          setNoteDate(todayString());   // 日付も今日にリセット
         }
       }
     });
@@ -121,7 +127,7 @@ export default function Home() {
 
   // 自分の予定を読み込み
   useEffect(() => {
-    if (!myId) return;         
+    if (!myId) return;
     const load = async () => {
       const ref = doc(db, "profiles", myId);
       const snap = await getDoc(ref);
@@ -172,7 +178,7 @@ export default function Home() {
     );
   }
 
-const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
+  const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
   return (
     <div
       style={{
@@ -186,7 +192,7 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
             研究室のフダ
           </div>
         </header>
- 
+
         {/* ── 自分のエリア ── */}
         <section
           style={{
@@ -195,7 +201,7 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
           }}
         >
           <div style={{ color: INK, fontSize: 14, marginBottom: 12, fontWeight: 600 }}>{myName}・{myLab}</div>
- 
+
           <div
             style={{ cursor: "pointer" }}
             onClick={async () => {
@@ -207,20 +213,19 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
               const ref = doc(db, "presences", myId);
               await setDoc(ref, {
                 name: myName, lab: myLab, state: next, stateDate: todayString(),
-                note: postedNote ? { text: postedNote, date: noteDate } : null,
-              });
+              }, { merge: true });
             }}
           >
             <Fuda state={shownMyLabel} />
           </div>
           <div style={{ color: INK_SUB, fontSize: 12, marginTop: 8 }}>札をタップして切り替え</div>
- 
+
           {postedNote && noteDate === todayString() && (
             <div style={{ marginTop: 16 }}>
               <Sticky text={postedNote} />
             </div>
           )}
- 
+
           <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 16, width: "100%", maxWidth: 340 }}>
             <input
               style={{ ...inputStyle, flex: 1 }}
@@ -242,7 +247,7 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
               貼る
             </button>
           </div>
- 
+
           <button
             onClick={() => setMySelected(true)}
             style={{ marginTop: 14, background: "transparent", border: "none", color: INK_SUB, fontSize: 13, textDecoration: "underline", cursor: "pointer" }}
@@ -250,7 +255,7 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
             自分の予定・TA業務を編集
           </button>
         </section>
- 
+
         {/* ── 友達エリア（2列グリッド） ── */}
         <div style={{ color: INK_SUB, fontSize: 13, marginBottom: 16, paddingLeft: 2 }}>友達</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", rowGap: 24, columnGap: 12, justifyItems: "center" }}>
@@ -267,12 +272,12 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
               }}
               style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", padding: 0 }}
             >
-              <Fuda state={f.state} />
+              <Fuda state={f.stateDate === todayString() ? f.state : "prep"} />
               <div style={{ marginTop: 10, textAlign: "center" }}>
                 <div style={{ color: INK, fontSize: 15, fontWeight: 600 }}>{f.name}</div>
                 <div style={{ color: INK_SUB, fontSize: 12, marginTop: 2 }}>{f.lab}</div>
               </div>
-              {f.note && (
+              {f.note && f.note.date === todayString() && (
                 <div style={{ marginTop: 8 }}>
                   <Sticky text={f.note.text} small rotate={2} />
                 </div>
@@ -281,12 +286,12 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
           ))}
         </div>
       </div>
- 
+
       {/* ── 自分の予定編集ポップアップ ── */}
       {myselected && (
         <Sheet onClose={() => setMySelected(false)}>
           <div style={{ color: INK, fontSize: 18, fontWeight: 700, marginBottom: 16 }}>予定・TA業務</div>
- 
+
           {mySchedule.map((item, index) => (
             <div key={index} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "10px 12px", borderRadius: 10, border: `1px solid ${LINE}` }}>
               <span style={{ flex: 1, color: INK, fontSize: 14 }}>{item.day} {item.slot} {item.title}</span>
@@ -298,17 +303,17 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
               </button>
             </div>
           ))}
- 
+
           <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
             <input placeholder="曜日" value={day} onChange={(e) => setDay(e.target.value)} style={{ ...inputStyle, width: 56 }} />
             <input placeholder="時限" value={slot} onChange={(e) => setSlot(e.target.value)} style={{ ...inputStyle, width: 64 }} />
             <input placeholder="内容" value={title} onChange={(e) => setTitle(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
           </div>
- 
+
           <button
             onClick={() => {
               if (!day || !slot || !title) return;
-              const item: ScheduleItem = { day, slot, title};
+              const item: ScheduleItem = { day, slot, title };
               setMySchedule([...mySchedule, item]);
               setDay(""); setSlot(""); setTitle("");
             }}
@@ -316,7 +321,7 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
           >
             予定を追加
           </button>
- 
+
           <button
             onClick={async () => {
               if (!myId) return;
@@ -330,7 +335,7 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
           </button>
         </Sheet>
       )}
- 
+
       {/* ── 友達の詳細ポップアップ ── */}
       {selected && (
         <Sheet onClose={() => setSelected(null)}>
@@ -338,7 +343,7 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
             <div style={{ color: INK, fontSize: 20, fontWeight: 700 }}>{selected.name}</div>
             <div style={{ color: INK_SUB, fontSize: 13, marginTop: 2 }}>{selected.lab}</div>
           </div>
- 
+
           <div style={{ color: INK_SUB, fontSize: 13, marginBottom: 12 }}>定期予定・TA業務</div>
           {selected.schedule && selected.schedule.length > 0 ? (
             selected.schedule.map((item, index) => (
@@ -356,4 +361,4 @@ const shownMyLabel: FudaState = labelDate === todayString() ? label : "prep";
     </div>
   );
 }
- 
+
