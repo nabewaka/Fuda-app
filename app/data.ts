@@ -5,4 +5,9 @@ export const MEMBERS: Record<string, { name: string; lab: string }> = {
   "0909": { name: "かなえ",   lab: "視覚情報" },
   "2525": { name: "きよら",   lab: "コンピュータビジョン" },
   "8686": { name: "まゆか",   lab: "コンピュータビジョン" },
+  "0125": { name: "めい",   lab: "ヘルスケア" },
+  "0203": { name: "ゆずき",   lab: "情報セキュリティ" },
+  "1128": { name: "ちさと",   lab: "ワイヤレス" },
+  "1106": { name: "ゆう",   lab: "コミュニケーション" },
+  "0523": { name: "まなほ",   lab: "社会知能" },
 }
